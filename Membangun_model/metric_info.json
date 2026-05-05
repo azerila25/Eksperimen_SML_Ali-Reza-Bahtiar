@@ -1,0 +1,10 @@
+{
+    "model_name": "Random Forest Classifier",
+    "final_accuracy": 0.9853658536585366,
+    "best_params": {
+        "max_depth": null,
+        "min_samples_split": 2,
+        "n_estimators": 100
+    },
+    "cv_splits": 3
+}
