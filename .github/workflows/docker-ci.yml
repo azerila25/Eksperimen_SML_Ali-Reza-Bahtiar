@@ -28,9 +28,9 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          # Ganti MLProject sesuai nama folder kamu (pastiin besar kecilnya sama)
+          # Pastikan -m MLProject sesuai dengan nama folder kamu (P besar)
           mlflow models build-docker -m MLProject -n ${{ secrets.DOCKER_HUB_USERNAME }}/credit-scoring-project --enable-mlserver
-          
+
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/credit-scoring-project
