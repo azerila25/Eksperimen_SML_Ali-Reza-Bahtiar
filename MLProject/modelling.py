@@ -26,7 +26,12 @@ def train_model():
         acc = accuracy_score(y_test, predictions)
         
         mlflow.log_metric("accuracy", acc)
-        mlflow.sklearn.log_model(model, "model")
+        # Tambahkan parameter conda_env agar Docker tahu harus pakai Python 3.12.7
+        mlflow.sklearn.log_model(
+            sk_model=model, 
+            artifact_path="model", 
+            conda_env="conda.yaml"
+        )
         print(f"Model trained with accuracy: {acc}")
 
 if __name__ == "__main__":
