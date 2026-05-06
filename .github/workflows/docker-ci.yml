@@ -16,42 +16,26 @@ jobs:
         with:
           python-version: '3.12.7'
 
-      - name: Check Env
-        run: python --version
-
       - name: Install dependencies
         run: |
-          pip install mlflow==2.19.0 scikit-learn pandas
+          pip install mlflow==2.19.0 scikit-learn pandas dagshub
 
       - name: Run mlflow project
         run: |
-          # Ganti --no-conda menjadi --env-manager local
+          # Jalankan project untuk menghasilkan mlruns
           mlflow run MLProject --env-manager local
 
-      - name: Get latest MLflow run id
+      - name: Build and Push Docker Model
         run: |
-          # Mengambil Run ID terakhir (untuk formalitas langkah kriteria)
-          echo "RUN_ID=$(ls -t mlruns/0 | head -n 1)" >> $GITHUB_ENV
+          # 1. Ambil RUN_ID terbaru secara otomatis
+          RUN_ID=$(ls -t mlruns/0 | grep -v "meta.yaml" | head -n 1)
+          echo "Menggunakan Run ID: $RUN_ID"
 
-      - name: Install Python dependencies
-        run: pip install dagshub
+          # 2. Build Docker Image menggunakan Secrets langsung
+          mlflow models build-docker -m "mlruns/0/$RUN_ID/artifacts/model" -n "${{ secrets.DOCKER_HUB_USERNAME }}/credit-scoring-project" --enable-mlserver
 
-      - name: Build Docker Model
-        run: |
-          # Kita arahkan ke folder artifacts hasil dari 'Run mlflow project' tadi
-          # Pastikan path 'artifacts/model' sesuai dengan yang kamu tulis di modelling.py
-          mlflow models build-docker -m mlruns/0/${{ env.RUN_ID }}/artifacts/model -n ${{ secrets.DOCKER_HUB_USERNAME }}/credit-scoring-project --enable-mlserver
+          # 3. Login ke Docker Hub
+          echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: Tag Docker Image
-        run: |
-          docker tag ${{ secrets.DOCKER_HUB_USERNAME }}/credit-scoring-project ${{ secrets.DOCKER_HUB_USERNAME }}/credit-scoring-project:latest
-
-      - name: Push Docker Image
-        run: |
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/credit-scoring-project:latest
+          # 4. Push ke Docker Hub
+          docker push "${{ secrets.DOCKER_HUB_USERNAME }}/credit-scoring-project:latest"
