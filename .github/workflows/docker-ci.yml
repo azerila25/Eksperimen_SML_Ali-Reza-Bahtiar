@@ -1,14 +1,12 @@
 name: Docker Build and Push
-
 on:
   push:
-    branches: [ "main" ]
-
+    branches: [ main ]
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
-      - name: Run actions/checkout@v3
+      - name: Checkout Code
         uses: actions/checkout@v3
 
       - name: Set up Python 3.12.7
@@ -16,26 +14,20 @@ jobs:
         with:
           python-version: '3.12.7'
 
-      - name: Install dependencies
-        run: |
-          pip install mlflow==2.19.0 scikit-learn pandas dagshub
+      - name: Install Dependencies
+        run: pip install mlflow==2.19.0 scikit-learn pandas dagshub
 
-      - name: Run mlflow project
-        run: |
-          # Jalankan project untuk menghasilkan mlruns
-          mlflow run MLProject --env-manager local
+      - name: Train Model
+        run: mlflow run MLProject --env-manager local
 
-      - name: Build and Push Docker Model
+      - name: Build and Push Docker
         run: |
-          # 1. Ambil RUN_ID terbaru secara otomatis
           RUN_ID=$(ls -t mlruns/0 | grep -v "meta.yaml" | head -n 1)
-          echo "Menggunakan Run ID: $RUN_ID"
-
-          # 2. Build Docker Image menggunakan Secrets langsung
-          mlflow models build-docker -m "mlruns/0/$RUN_ID/artifacts/model" -n "${{ secrets.DOCKER_HUB_USERNAME }}/credit-scoring-project" --enable-mlserver
-
-          # 3. Login ke Docker Hub
           echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
-
-          # 4. Push ke Docker Hub
+          
+          mlflow models build-docker \
+            -m "mlruns/0/$RUN_ID/artifacts/model" \
+            -n "${{ secrets.DOCKER_HUB_USERNAME }}/credit-scoring-project" \
+            --enable-mlserver
+          
           docker push "${{ secrets.DOCKER_HUB_USERNAME }}/credit-scoring-project:latest"

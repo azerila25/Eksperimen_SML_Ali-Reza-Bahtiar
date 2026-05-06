@@ -1,4 +1,4 @@
-name: credit_scoring_env
+name: mlsystem
 channels:
   - conda-forge
 dependencies:
@@ -8,3 +8,4 @@ dependencies:
       - mlflow==2.19.0
       - scikit-learn
       - pandas
+      - dagshub
