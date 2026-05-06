@@ -1,0 +1,4 @@
+mlruns/
+*.csv
+__pycache__/
+.env
